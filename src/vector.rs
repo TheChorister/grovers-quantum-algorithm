@@ -4,10 +4,8 @@ use std::fmt::Display;
 
 pub type Component = Complex<f64>;
 
-pub trait Basis: ConcreteBasis<Self> + PartialEq + Clone + Display + dyn_clone::DynClone + 'static {
-	const SIZE: usize;
-	
-	fn iter() -> impl Iterator<Item = Self>;
+pub trait Basis: ConcreteBasis<Self> + PartialEq + Clone + Display + dyn_clone::DynClone + 'static {	
+	fn iter() -> impl Iterator<Item = Self> + Clone;
 }
 
 impl<T: Basis> StateVectorTrait<T> for T {

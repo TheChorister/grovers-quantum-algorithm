@@ -1,6 +1,7 @@
 #[macro_use]
 mod vector;
 mod operator;
+mod product;
 
 use vector::Basis;
 use vector::StateVector;
@@ -15,9 +16,7 @@ enum QuBit {
 }
 
 impl Basis for QuBit {
-	const SIZE: usize = 2;
-
-	fn iter() -> impl Iterator<Item = QuBit> {
+	fn iter() -> impl Iterator<Item = QuBit> + Clone {
 		vec![
 			Self::On,
 			Self::Off

@@ -35,7 +35,7 @@ impl<B: Basis> LinearOperatorTrait<B> for ZeroLinearOperator {
 }
 
 pub struct LinearOperator<T: Basis> {
-	inner: Box<dyn LinearOperatorTrait<T>>
+	pub(in super) inner: Box<dyn LinearOperatorTrait<T>>
 }
 
 impl<T: Basis> Clone for LinearOperator<T> {
