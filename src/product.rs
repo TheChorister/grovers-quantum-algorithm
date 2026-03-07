@@ -6,51 +6,35 @@ use super::vector::Component;
 use super::operator::LinearOperator;
 use super::operator::LinearOperatorTrait;
 
+use std::ops::BitOr;
 use itertools::iproduct;
 
-// MACROS
+pub trait TensorProduct {
+	type LHS;
+	type RHS;
+	type Output;
+	fn prod(a: Self::LHS, b: Self::RHS) -> Self::Output;
+}
 
 pub trait Commute {
-	type Commuted: Basis;
-	fn commute(self) -> Self::Commuted;
+	type Commute;
+
+	fn commute(self) -> Self::Commute;
 }
 
-pub trait AssociateLeft: Basis {
-    type Associated: Basis;
-    fn associate_left(self) -> Self::Associated;
+pub trait AssociateLeft {
+	type Output;
+
+	fn associate_left(self) -> Self::Output;
 }
 
-pub trait AssociateRight: Basis {
-    type Associated: Basis;
-    fn associate_right(self) -> Self::Associated;
+pub trait AssociateRight {
+	type Output;
+
+	fn associate_left(self) -> Self::Output;
 }
 
-macro_rules! binary_commute {
-	($class:ident) => {
-		impl<U: Basis, V: Basis> Commute for $class<U, V> {
-			type Commuted = $class<V, U>;
-			fn commute(self) -> Self::Commuted {
-				$class(self.1, self.0)
-			}
-		}
-
-		impl<T: Basis, U: Basis, V: Basis> AssociateLeft for $class<T, BasisTensorProduct<U, V>> {
-			type Associated = $class<BasisProduct<T, U>, V>;
-			fn associate_left(self) -> Self::Associated {
-				$class($class(self.0, self.1.0), self.1.1)
-			}
-		}
-	}
-}
-
-macro_rules! commute {
-	($class:ident) => {
-		binary_commute!($class);
-		//ternary_commute!($class);
-	}
-}
-
-// BASIS TENSOR PRODUCT
+// BASIS
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct BasisTensorProduct<U: Basis, V: Basis>(U, V);
@@ -67,9 +51,17 @@ impl<U: Basis, V: Basis> std::fmt::Display for BasisTensorProduct<U, V> {
 	}
 }
 
-commute!(BasisTensorProduct);
+impl<U: Basis, V: Basis> TensorProduct for BasisTensorProduct<U, V> {
+	type LHS = U;
+	type RHS = V;
+	type Output = Self;
 
-// VECTOR TENSOR PRODUCT
+	fn prod(lhs: U, rhs: V) -> Self {
+		Self(lhs, rhs)
+	}
+}
+
+// VECTOR
 
 #[derive(Clone)]
 pub struct VectorTensorProduct<U: Basis, V: Basis> (StateVector<U>, StateVector<V>);
@@ -80,9 +72,25 @@ impl<U: Basis, V: Basis> StateVectorTrait<BasisTensorProduct<U, V>> for VectorTe
 	}
 }
 
-commute!(VectorTensorProduct);
+impl<U: Basis, V: Basis> TensorProduct for VectorTensorProduct<U, V> {
+	type LHS = StateVector<U>;
+	type RHS = StateVector<V>;
+	type Output = StateVector<BasisTensorProduct<U, V>>;
 
-// LINEAR OPERATOR TENSOR PRODUCT
+	fn prod(lhs: StateVector<U>, rhs: StateVector<V>) -> Self::Output {
+		StateVector::new(Self(lhs, rhs))
+	}
+}
+
+impl<U: Basis, V: Basis> BitOr<StateVector<V>> for StateVector<U> {
+	type Output = StateVector<BasisTensorProduct<U, V>>;
+
+	fn bitor(self, other: StateVector<V>) -> Self::Output {
+		VectorTensorProduct::prod(self, other)
+	}
+}
+
+// LINEAR OPERATOR
 
 #[derive(Clone)]
 pub struct LinearOperatorTensorProduct<U: Basis, V: Basis> (LinearOperator<U>, LinearOperator<V>);
@@ -93,4 +101,20 @@ impl<U: Basis, V: Basis> LinearOperatorTrait<BasisTensorProduct<U, V>> for Linea
 	}
 }
 
-commute!(LinearOperatorTensorProduct);
+impl<U: Basis, V: Basis> TensorProduct for LinearOperatorTensorProduct<U, V> {
+	type LHS = LinearOperator<U>;
+	type RHS = LinearOperator<V>;
+	type Output = LinearOperator<BasisTensorProduct<U, V>>;
+
+	fn prod(lhs: Self::LHS, rhs: Self::RHS) -> Self::Output {
+		LinearOperator::new(Self(lhs, rhs))
+	}
+}
+
+impl<U: Basis, V: Basis> BitOr<LinearOperator<V>> for LinearOperator<U> {
+	type Output = LinearOperator<BasisTensorProduct<U, V>>;
+
+	fn bitor(self, other: LinearOperator<V>) -> Self::Output {
+		LinearOperatorTensorProduct::prod(self, other)
+	}
+}

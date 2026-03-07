@@ -6,7 +6,7 @@ type Component = Complex<f64>;
 use crate::vector::Basis;
 use crate::vector::StateVector;
 
-pub trait LinearOperatorTrait<T: Basis>: dyn_clone::DynClone {
+pub trait LinearOperatorTrait<T: Basis>: dyn_clone::DynClone + 'static {
 	// as in <i|M|j>
 	fn get_component(&self, index: (T, T)) -> Component;
 }
@@ -36,6 +36,14 @@ impl<B: Basis> LinearOperatorTrait<B> for ZeroLinearOperator {
 
 pub struct LinearOperator<T: Basis> {
 	pub(in super) inner: Box<dyn LinearOperatorTrait<T>>
+}
+
+impl<T: Basis> LinearOperator<T> {
+	pub fn new(operator: impl LinearOperatorTrait<T>) -> Self {
+		Self {
+			inner: Box::new(operator)
+		}
+	}
 }
 
 impl<T: Basis> Clone for LinearOperator<T> {
