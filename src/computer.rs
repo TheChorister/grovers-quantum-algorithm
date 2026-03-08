@@ -1,9 +1,26 @@
-use std::ops::{ Deref, DerefMut };
-use crate::{utils::UInt, vector::{ Basis, StateVector, ZeroStateVector }};
+use crate::{utils::UInt, vector::{ Basis, StateVector }};
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct QuBitBasis<const N: usize> {
     data: [bool; N]
+}
+
+impl<const N: usize> QuBitBasis<N> {
+    pub fn get(&self, i: usize) -> bool {
+        self.data[i]
+    }
+    
+    pub fn eq_except(&self, other: &Self, index: &[usize]) -> bool {
+        for i in 0..N {
+            if index.contains(&i) {
+                continue;
+            }
+            if self.get(i) != other.get(i) {
+                return false;
+            }
+        }
+        true
+    }
 }
 
 impl<const N: usize> Basis for QuBitBasis<N> {
@@ -43,35 +60,14 @@ impl<const N: usize> Display for QuBitBasis<N> {
     }
 }
 
-pub struct QuString<const N: usize> {
-    state_vector: StateVector<QuBitBasis<N>>
-}
+pub type QuString<const N: usize> = StateVector<QuBitBasis<N>>;
 
-impl<const N: usize> QuString<N> {
-    pub fn new() -> Self {
-        Self {
-            state_vector: StateVector::new(ZeroStateVector::new())
-        }
-    }
+pub fn default_qstring<const N: usize>() -> QuString<N> {
+    StateVector::new(QuBitBasis::from(UInt::<N>::zero()))
 }
 
 impl<const N: usize> Default for QuString<N> {
     fn default() -> Self {
-        Self {
-            state_vector: StateVector::new(QuBitBasis::from(UInt::<N>::try_from(0u8).unwrap()))
-        }
-    }
-}
-
-impl<const N: usize> Deref for QuString<N> {
-    type Target = StateVector<QuBitBasis<N>>;
-    fn deref(&self) -> &Self::Target {
-        &self.state_vector
-    }
-}
-
-impl<const N: usize> DerefMut for QuString<N> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.state_vector
+        StateVector::new(QuBitBasis::from(UInt::<N>::zero()))
     }
 }

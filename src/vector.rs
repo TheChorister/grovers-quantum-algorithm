@@ -77,6 +77,10 @@ impl<B: Basis> StateVector<B> {
 		(arg - 1.) < 1e-12
 	}
 
+	pub fn probability(&self, state: StateVector<B>) -> f64 {
+		(state * self).norm_sqr()
+	}
+
 	pub fn measure<T: ConcreteBasis<B>>(&self) -> StateVector<B> {
 		if !self.is_normal() {
 			panic!("Cannot measure a state vector that is not normalized!");
@@ -108,6 +112,23 @@ impl<B: Basis> Display for StateVector<B> {
 }
 
 // linear operations on state vectors
+
+// conjugation
+
+#[derive(Clone)]
+struct StateVectorConj<T: Basis>(StateVector<T>);
+
+impl<T: Basis> StateVectorTrait<T> for StateVectorConj<T> {
+	fn get_component(&self, i: T) -> Component {
+		self.0.inner.get_component(i).conj()
+	}
+}
+
+impl<T: Basis> StateVector<T> {
+	pub fn conj(self) -> StateVector<T> {
+		StateVector { inner: Box::new(StateVectorConj(self)) }
+	}
+}
 
 // addition
 
@@ -336,6 +357,7 @@ impl<B: Basis> Mul<&StateVector<B>> for StateVector<B> {
 
 // macro
 
+#[allow(unused)]
 macro_rules! state_vector {
 	($basis:ty: $(+ ($coefficient:expr)  |$basis_vector:ident>)+) => {
 		{

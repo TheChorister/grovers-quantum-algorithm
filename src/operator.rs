@@ -5,6 +5,7 @@ type Component = Complex<f64>;
 
 use crate::vector::Basis;
 use crate::vector::StateVector;
+use crate::vector::StateVectorTrait;
 
 pub trait LinearOperatorTrait<T: Basis>: dyn_clone::DynClone + 'static {
 	// as in <i|M|j>
@@ -21,6 +22,7 @@ impl<T: Basis> LinearOperatorTrait<T> for (T, T) {
 	}
 }
 
+#[allow(unused)]
 #[derive(Clone)]
 pub struct ZeroLinearOperator();
 
@@ -294,6 +296,96 @@ impl<B: Basis> Mul<&LinearOperator<B>> for LinearOperator<B> {
 
 	fn mul(self, other: &LinearOperator<B>) -> Self::Output {
 		self * other.clone()
+	}
+}
+
+// state vector product (as in A|psi>)
+/*
+A|psi> = \sum psi_i A|i>
+=> <i| A|psi> = \sum psi_j <i|A|j>
+*/
+
+#[derive(Clone)]
+struct LinearOperatorStateVectorProduct<T: Basis>(LinearOperator<T>, StateVector<T>);
+
+impl<B: Basis> StateVectorTrait<B> for LinearOperatorStateVectorProduct<B> {	
+	fn get_component(&self, i: B) -> Component {
+		let mut sum: Component = Component::ZERO;
+
+		for j in <B as Basis>::iter() {
+			sum += self.0.inner.get_component((i.clone(), j.clone())) * self.1.inner.get_component(j);
+		}
+
+		sum
+	}
+}
+
+
+impl<B: Basis> Mul<StateVector<B>> for LinearOperator<B> {
+	type Output = StateVector<B>;
+
+	fn mul(self, other: StateVector<B>) -> Self::Output {
+		StateVector {
+			inner: Box::new(
+				LinearOperatorStateVectorProduct(self, other) 
+			)
+		}
+	}
+}
+
+impl<B: Basis> Mul<StateVector<B>> for &LinearOperator<B> {
+	type Output = StateVector<B>;
+
+	fn mul(self, other: StateVector<B>) -> Self::Output {
+		self.clone() * other
+	}
+}
+
+impl<B: Basis> Mul<&StateVector<B>> for &LinearOperator<B> {
+	type Output = StateVector<B>;
+
+	fn mul(self, other: &StateVector<B>) -> Self::Output {
+		self.clone() * other.clone()
+	}
+}
+
+impl<B: Basis> Mul<&StateVector<B>> for LinearOperator<B> {
+	type Output = StateVector<B>;
+
+	fn mul(self, other: &StateVector<B>) -> Self::Output {
+		self * other.clone()
+	}
+}
+
+impl<B: Basis> Mul<LinearOperator<B>> for StateVector<B> {
+	type Output = StateVector<B>;
+
+	fn mul(self, other: LinearOperator<B>) -> Self::Output {
+		(other * self).conj()
+	}
+}
+
+impl<B: Basis> Mul<LinearOperator<B>> for &StateVector<B> {
+	type Output = StateVector<B>;
+
+	fn mul(self, other: LinearOperator<B>) -> Self::Output {
+		(other * self).conj()
+	}
+}
+
+impl<B: Basis> Mul<&LinearOperator<B>> for StateVector<B> {
+	type Output = StateVector<B>;
+
+	fn mul(self, other: &LinearOperator<B>) -> Self::Output {
+		(other * self).conj()
+	}
+}
+
+impl<B: Basis> Mul<&LinearOperator<B>> for &StateVector<B> {
+	type Output = StateVector<B>;
+
+	fn mul(self, other: &LinearOperator<B>) -> Self::Output {
+		(other * self).conj()
 	}
 }
 

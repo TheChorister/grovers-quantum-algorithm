@@ -1,6 +1,15 @@
 // obviously inefficient but for our purposes ok
+#[derive(Clone)]
 pub struct UInt<const N: usize> {
     pub(super) bits: [bool; N]
+}
+
+impl<const N: usize> UInt<N> {
+    pub fn zero() -> Self {
+        Self {
+            bits: [false; N]
+        }
+    }
 }
 
 macro_rules! impl_try_from {

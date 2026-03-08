@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use super::vector::StateVector;
 use super::vector::StateVectorTrait;
 use super::vector::Basis;
