@@ -1,75 +1,77 @@
-pub use paste::paste;
-pub use itertools::iproduct;
+use std::ops::{ Deref, DerefMut };
+use crate::{utils::UInt, vector::{ Basis, StateVector, ZeroStateVector }};
 
-macro_rules! qubit {
-    ($v:vis $name:ident) => {
-        #[derive(Eq, PartialEq, Clone)]
-        $v enum $name {
-            On,
-            Off
-        }
+#[derive(Clone, Eq, PartialEq)]
+pub struct QuBitBasis<const N: usize> {
+    data: [bool; N]
+}
 
-        impl Basis for $name {
-            fn iter() -> impl Iterator<Item = $name> + Clone {
-                vec![
-                    Self::On,
-                    Self::Off
-                ].into_iter()
-            }
-        }
+impl<const N: usize> Basis for QuBitBasis<N> {
+    fn iter() -> impl Iterator<Item = Self> + Clone {
+        (0u128..(1 << N)).map(|v| UInt::try_from(v).unwrap()).map(|v| v.into())
+    }
+}
 
-        impl Display for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                match &self {
-                    Self::On => write!(f, "1"),
-                    Self::Off => write!(f, "0")
-                }
-            }
+impl<const N: usize> From<UInt<N>> for QuBitBasis<N> {
+    fn from(other: UInt<N>) -> Self {
+        Self {
+            data: other.bits
         }
     }
 }
 
-macro_rules! qstring {
-    ($v:vis $name:ident($basis:ident): $($bit:ident),*) => {
-        $(
-            qubit!($v $bit);
-        )*
+impl<const N: usize> From<QuBitBasis<N>> for UInt<N> {
+    fn from(other: QuBitBasis<N>) -> Self {
+        Self {
+            bits: other.data
+        }
+    }
+}
 
-        paste! {
-            #[derive(Clone, PartialEq, Eq)]
-            $v struct $basis {
-                $([< bit_ $bit:snake >]: $bit),*
-            }
+use std::fmt::Display;
 
-            impl crate::vector::Basis for $basis {
-                fn iter() -> impl Iterator<Item = $basis> + Clone {
-                    iproduct!(
-                        $(<$bit as Basis>::iter()),*
-                    ).map(|($([< bit_ $bit:snake >]),*)| Self { $([< bit_ $bit:snake >]),* })
-                }
-            }
-
-            impl Display for $basis {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    $(
-                        write!(f, "{}", self.[< bit_ $bit:snake >])?
-                    );*;
-                    Ok(())
-                }
-            }
-
-            #[derive(Clone)]
-            struct [< Private $name >] {
-                $([< bit_ $bit:snake >]: StateVector<$bit>),*
-            }
-
-            impl crate::vector::StateVectorTrait<$basis> for [< Private $name >] {
-                fn get_component(&self, basis: $basis) -> Component {
-                    $(
-                        self.[< bit_ $bit:snake >].inner.get_component(basis.[< bit_ $bit:snake >]) *
-                    )* Component::ONE
-                }
+impl<const N: usize> Display for QuBitBasis<N> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for bit in self.data.iter() {
+            if *bit {
+                write!(f, "1")?
+            } else {
+                write!(f, "0")?
             }
         }
+        Ok(())
+    }
+}
+
+pub struct QuString<const N: usize> {
+    state_vector: StateVector<QuBitBasis<N>>
+}
+
+impl<const N: usize> QuString<N> {
+    pub fn new() -> Self {
+        Self {
+            state_vector: StateVector::new(ZeroStateVector::new())
+        }
+    }
+}
+
+impl<const N: usize> Default for QuString<N> {
+    fn default() -> Self {
+        Self {
+            state_vector: StateVector::new(QuBitBasis::from(UInt::<N>::try_from(0u8).unwrap()))
+        }
+    }
+}
+
+impl<const N: usize> Deref for QuString<N> {
+    type Target = StateVector<QuBitBasis<N>>;
+    fn deref(&self) -> &Self::Target {
+        &self.state_vector
+    }
+}
+
+impl<const N: usize> DerefMut for QuString<N> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.state_vector
     }
 }
