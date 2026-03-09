@@ -62,10 +62,6 @@ impl<const N: usize> Display for QuBitBasis<N> {
 
 pub type QuString<const N: usize> = StateVector<QuBitBasis<N>>;
 
-pub fn default_qstring<const N: usize>() -> QuString<N> {
-    StateVector::new(QuBitBasis::from(UInt::<N>::zero()))
-}
-
 impl<const N: usize> Default for QuString<N> {
     fn default() -> Self {
         StateVector::new(QuBitBasis::from(UInt::<N>::zero()))

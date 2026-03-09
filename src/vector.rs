@@ -34,10 +34,12 @@ pub trait StateVectorTrait<T: Basis>: dyn_clone::DynClone + 'static {
 	fn get_component(&self, i: T) -> Component;
 }
 
+#[allow(unused)]
 #[derive(Clone)]
 pub struct ZeroStateVector();
 
 impl ZeroStateVector {
+	#[allow(unused)]
 	pub fn new() -> Self {
 		Self()
 	}

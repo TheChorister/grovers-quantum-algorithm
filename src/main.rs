@@ -2,9 +2,12 @@
 mod vector;
 mod operator;
 mod product;
-pub mod computer;
+mod computer;
 mod utils;
-pub mod gate;
+mod gate;
+pub mod interface;
+
+pub use interface::*;
 
 use computer::*;
 
