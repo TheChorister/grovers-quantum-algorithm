@@ -3,6 +3,9 @@ name = "quantum-rust"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+crate-type = ["cdylib"]
+
 [dependencies]
 dyn-clone = "1.0.20"
 fastrand = "2.3.0"
