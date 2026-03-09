@@ -7,7 +7,7 @@ use crate::gate::*;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum GateType {
     Identity,
     PauliX,
@@ -43,7 +43,25 @@ pub const BITS: usize = 6;
 
 #[wasm_bindgen]
 pub struct Program {
-    gates: Vec<(GateType, usize)>
+    gates: Vec<Gate>
+}
+
+#[wasm_bindgen]
+#[derive(Clone)]
+pub struct Gate {
+    pub gate_type: GateType,
+    pub bit: usize
+}
+
+#[wasm_bindgen]
+impl Gate {
+    #[wasm_bindgen(constructor)]
+    pub fn new(gate: GateType, bit: usize) -> Self {
+        Gate {
+            gate_type: gate,
+            bit
+        }
+    }
 }
 
 #[wasm_bindgen]
@@ -61,8 +79,8 @@ impl Program {
     }
 
     #[wasm_bindgen]
-    pub fn add(&mut self, type_: GateType, bit: usize) {
-        self.gates.push((type_, bit));
+    pub fn add(&mut self, gate: Gate) {
+        self.gates.push(gate);
     }
 
     #[wasm_bindgen]
@@ -73,7 +91,7 @@ impl Program {
     fn get_state_vector(&self) -> StateVector<QuBitBasis<BITS>> {
 	    let mut string: QuString<BITS> = Default::default();
         for gate in self.gates.iter() {
-            if let Some(gate) = gate.0.clone().into(gate.1) {
+            if let Some(gate) = gate.gate_type.clone().into(gate.bit) {
                 string = gate * string;
             }
         }
@@ -99,5 +117,10 @@ impl Program {
             }
         }
         unreachable!("No results to measurement vector!");
+    }
+
+    #[wasm_bindgen]
+    pub fn get_gates(&self) -> Vec<Gate> {
+        self.gates.clone()
     }
 }
