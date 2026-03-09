@@ -8,13 +8,10 @@ pub mod interface;
 
 pub use interface::*;
 
-use computer::*;
-
-use crate::gate::*;
-
 fn main() {
-	let mut string: QuString<4> = Default::default();
-	string = PauliXGate::new(0).unwrap() * string;
-	string = SwapGate::new(0, 1).unwrap() * string;
-	println!("{}", string.measure::<QuBitBasis<4>>())
+	let mut program = Program::new();
+	program.add(GateType::PauliX, 0);
+	program.add(GateType::Hadamard, 0);
+	program.add(GateType::Hadamard, 1);
+	println!("{}", program.run());
 }
