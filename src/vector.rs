@@ -1,10 +1,11 @@
 use num::complex::Complex;
+use std::collections::HashMap;
 use std::ops::{ Mul, Div, Add, Neg, Sub };
 use std::fmt::Display;
 
 pub type Component = Complex<f64>;
 
-pub trait Basis: ConcreteBasis<Self> + PartialEq + Clone + Display + dyn_clone::DynClone + 'static {	
+pub trait Basis: ConcreteBasis<Self> + std::hash::Hash + PartialEq + Eq + Clone + Display + dyn_clone::DynClone + 'static {	
 	fn iter() -> impl Iterator<Item = Self> + Clone;
 }
 
@@ -52,12 +53,14 @@ impl<B: Basis> StateVectorTrait<B> for ZeroStateVector {
 }
 
 pub struct StateVector<T: Basis> {
-	pub(in super) inner: Box<dyn StateVectorTrait<T>>
+	inner: Box<dyn StateVectorTrait<T>>,
+	cache: HashMap<T, Component>
 }
 
 impl<T: Basis> Clone for StateVector<T> {
 	fn clone(&self) -> Self {
 		StateVector {
+			cache: self.cache.clone(),
 			inner: dyn_clone::clone_box(&*self.inner)
 		}
 	}
@@ -66,6 +69,7 @@ impl<T: Basis> Clone for StateVector<T> {
 impl<B: Basis> StateVector<B> {
 	pub fn new(state_vector: impl StateVectorTrait<B>) -> Self {
 		Self {
+			cache: HashMap::new(),
 			inner: Box::new(state_vector)
 		}
 	}
@@ -73,7 +77,7 @@ impl<B: Basis> StateVector<B> {
 	pub fn is_normal(&self) -> bool {
 		let mut arg: f64 = 0.;
 		for basis in <B as Basis>::iter() {
-			arg += self.inner.get_component(basis).norm_sqr();
+			arg += self.get_component(basis).norm_sqr();
 		}
 		// we will use a floating point range of 1e-12
 		(arg - 1.) < 1e-12
@@ -97,6 +101,13 @@ impl<B: Basis> StateVector<B> {
 		}
 		unreachable!("Attempted to measure with non-orthonormal alternative basis!")
 	}
+
+	pub fn get_component(&self, i: B) -> Component {
+		match self.cache.get(&i) {
+			Some(c) => *c,
+			None => self.inner.get_component(i) // it would be sensible to add to the cache here but I have an immutable reference
+		}
+	}
 }
 
 impl<B: Basis> Display for StateVector<B> {
@@ -106,7 +117,7 @@ impl<B: Basis> Display for StateVector<B> {
 			if i != 0 {
 				write!(f, " + ")?
 			}
-			write!(f, "({}) |{}⟩", self.inner.get_component(basis.clone()), basis)?;
+			write!(f, "({}) |{}⟩", self.get_component(basis.clone()), basis)?;
 			i += 1
 		}
 		Ok(())
@@ -122,13 +133,13 @@ struct StateVectorConj<T: Basis>(StateVector<T>);
 
 impl<T: Basis> StateVectorTrait<T> for StateVectorConj<T> {
 	fn get_component(&self, i: T) -> Component {
-		self.0.inner.get_component(i).conj()
+		self.0.get_component(i).conj()
 	}
 }
 
 impl<T: Basis> StateVector<T> {
 	pub fn conj(self) -> StateVector<T> {
-		StateVector { inner: Box::new(StateVectorConj(self)) }
+		StateVector::new(StateVectorConj(self))
 	}
 }
 
@@ -139,7 +150,7 @@ struct StateVectorAddition<T: Basis>(StateVector<T>, StateVector<T>);
 
 impl<T: Basis> StateVectorTrait<T> for StateVectorAddition<T> {
 	fn get_component(&self, i: T) -> Component {
-		self.0.inner.get_component(i.clone()) + self.1.inner.get_component(i.clone())
+		self.0.get_component(i.clone()) + self.1.get_component(i.clone())
 	}
 }
 
@@ -147,11 +158,7 @@ impl<B: Basis> Add<StateVector<B>> for StateVector<B> {
 	type Output = StateVector<B>;
 
 	fn add(self, other: Self) -> Self {
-		StateVector {
-			inner: Box::new(
-				StateVectorAddition(self, other)
-			)
-		}
+		StateVector::new(StateVectorAddition(self, other))
 	}
 }
 
@@ -186,7 +193,7 @@ struct StateVectorScalarMultiplication<T: Basis>(Component, StateVector<T>);
 
 impl<T: Basis> StateVectorTrait<T> for StateVectorScalarMultiplication<T> {
 	fn get_component(&self, i: T) -> Component {
-		self.0 * self.1.inner.get_component(i.clone())
+		self.0 * self.1.get_component(i.clone())
 	}
 }
 
@@ -194,11 +201,7 @@ impl<B: Basis> Mul<Component> for StateVector<B> {
 	type Output = StateVector<B>;
 
 	fn mul(self, other: Component) -> Self {
-		StateVector {
-			inner: Box::new(
-				StateVectorScalarMultiplication(other, self)
-			)
-		}
+		StateVector::new(StateVectorScalarMultiplication(other, self))
 	}
 }
 
@@ -232,11 +235,7 @@ impl<B: Basis> Div<Component> for StateVector<B> {
 	type Output = StateVector<B>;
 
 	fn div(self, other: Component) -> Self {
-		StateVector {
-			inner: Box::new(
-				StateVectorScalarMultiplication(other.inv(), self)
-			)
-		}
+		StateVector::new(StateVectorScalarMultiplication(other.inv(), self))
 	}
 }
 
@@ -255,7 +254,7 @@ struct StateVectorNeg<T: Basis>(StateVector<T>);
 
 impl<T: Basis> StateVectorTrait<T> for StateVectorNeg<T> {
 	fn get_component(&self, i: T) -> Component {
-		- self.0.inner.get_component(i.clone())
+		- self.0.get_component(i.clone())
 	}
 }
 
@@ -263,11 +262,7 @@ impl<B: Basis> Neg for StateVector<B> {
 	type Output = StateVector<B>;
 
 	fn neg(self) -> Self::Output {
-		StateVector {
-			inner: Box::new(
-				StateVectorNeg(self)
-			)
-		}
+		StateVector::new(StateVectorNeg(self))
 	}
 }
 
@@ -285,11 +280,7 @@ impl<B: Basis> Sub<StateVector<B>> for StateVector<B> {
 	type Output = StateVector<B>;
 
 	fn sub(self, other: StateVector<B>) -> Self {
-		StateVector {
-			inner: Box::new(
-				StateVectorAddition(self, - other)
-			)
-		}
+		StateVector::new(StateVectorAddition(self, - other))
 	}
 }
 
@@ -326,7 +317,7 @@ impl<B: Basis> Mul<StateVector<B>> for StateVector<B> {
 		let mut prod: Component = Component::ZERO;
 
 		for i in <B as Basis>::iter() {
-			prod += self.inner.get_component(i.clone()).conj() * other.inner.get_component(i)
+			prod += self.get_component(i.clone()).conj() * other.get_component(i)
 		}
 
 		prod

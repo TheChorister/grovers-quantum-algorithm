@@ -4,9 +4,9 @@ use crate::vector::{Basis, StateVector};
 use crate::{computer::QuBitBasis, operator::LinearOperator};
 use crate::gate::*;
 
-use wasm_bindgen::prelude::*;
+//use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
+//#[wasm_bindgen]
 #[derive(Clone)]
 pub enum GateType {
     Identity,
@@ -38,34 +38,34 @@ impl GateType {
     }
 }
 
-// then the js can use a normal integer type as opposed to bigint for anything larger
-pub const BITS: usize = 32;
+// BITS <= 32 since then the js can use a normal integer type as opposed to bigint for anything larger
+pub const BITS: usize = 4;
 
-#[wasm_bindgen]
+//#[wasm_bindgen]
 pub struct Program {
     gates: Vec<(GateType, usize)>
 }
 
-#[wasm_bindgen]
+//#[wasm_bindgen]
 impl Program {
-    #[wasm_bindgen(constructor)]
+    //#[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
             gates: Vec::new()
         }
     }
 
-    #[wasm_bindgen]
+    //#[wasm_bindgen]
     pub fn get_max_bits() -> usize {
         BITS
     }
 
-    #[wasm_bindgen]
+    //#[wasm_bindgen]
     pub fn add(&mut self, type_: GateType, bit: usize) {
         self.gates.push((type_, bit));
     }
 
-    #[wasm_bindgen]
+    //#[wasm_bindgen]
     pub fn clear(&mut self) {
         self.gates.clear();
     }
@@ -80,7 +80,7 @@ impl Program {
         string
     }
     
-    #[wasm_bindgen]
+    //#[wasm_bindgen]
     pub fn get_probability(&self, res: u32) -> f64 {
         let measurable = self.get_state_vector();
         let basis: QuBitBasis<BITS> = match UInt::<BITS>::try_from(res) {
@@ -90,7 +90,7 @@ impl Program {
         measurable.probability(StateVector::new(basis))
     }
 
-    #[wasm_bindgen]
+    //#[wasm_bindgen]
     pub fn run(&self) -> u32 {
         let result = self.get_state_vector().measure::<QuBitBasis<BITS>>();
         for basis in <QuBitBasis::<BITS> as Basis>::iter() {

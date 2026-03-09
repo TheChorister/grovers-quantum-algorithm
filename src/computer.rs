@@ -1,6 +1,6 @@
 use crate::{utils::UInt, vector::{ Basis, StateVector }};
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct QuBitBasis<const N: usize> {
     data: [bool; N]
 }

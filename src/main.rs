@@ -1,7 +1,6 @@
 #[macro_use]
 mod vector;
 mod operator;
-mod product;
 mod computer;
 mod utils;
 mod gate;

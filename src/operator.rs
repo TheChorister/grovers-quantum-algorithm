@@ -46,6 +46,10 @@ impl<T: Basis> LinearOperator<T> {
 			inner: Box::new(operator)
 		}
 	}
+
+	pub fn get_component(&self, i: (T, T)) -> Component {
+		self.inner.get_component(i)
+	}
 }
 
 impl<T: Basis> Clone for LinearOperator<T> {
@@ -65,7 +69,7 @@ struct LinearOperatorAddition<T: Basis>(LinearOperator<T>, LinearOperator<T>);
 
 impl<T: Basis> LinearOperatorTrait<T> for LinearOperatorAddition<T> {
 	fn get_component(&self, index: (T, T)) -> Component {
-		self.0.inner.get_component(index.clone()) + self.1.inner.get_component(index.clone())
+		self.0.get_component(index.clone()) + self.1.get_component(index.clone())
 	}
 }
 
@@ -112,7 +116,7 @@ struct LinearOperatorScalarMultiplication<T: Basis>(Component, LinearOperator<T>
 
 impl<T: Basis> LinearOperatorTrait<T> for LinearOperatorScalarMultiplication<T> {
 	fn get_component(&self, i: (T, T)) -> Component {
-		self.0 * self.1.inner.get_component(i.clone())
+		self.0 * self.1.get_component(i.clone())
 	}
 }
 
@@ -256,7 +260,7 @@ impl<B: Basis> LinearOperatorTrait<B> for LinearOperatorProduct<B> {
 		let mut sum: Component = Component::ZERO;
 
 		for j in <B as Basis>::iter() {
-			sum += self.0.inner.get_component((n.clone(), j.clone())) * self.1.inner.get_component((j, m.clone()));
+			sum += self.0.get_component((n.clone(), j.clone())) * self.1.get_component((j, m.clone()));
 		}
 
 		sum
@@ -313,7 +317,7 @@ impl<B: Basis> StateVectorTrait<B> for LinearOperatorStateVectorProduct<B> {
 		let mut sum: Component = Component::ZERO;
 
 		for j in <B as Basis>::iter() {
-			sum += self.0.inner.get_component((i.clone(), j.clone())) * self.1.inner.get_component(j);
+			sum += self.0.get_component((i.clone(), j.clone())) * self.1.get_component(j);
 		}
 
 		sum
@@ -325,11 +329,7 @@ impl<B: Basis> Mul<StateVector<B>> for LinearOperator<B> {
 	type Output = StateVector<B>;
 
 	fn mul(self, other: StateVector<B>) -> Self::Output {
-		StateVector {
-			inner: Box::new(
-				LinearOperatorStateVectorProduct(self, other) 
-			)
-		}
+		StateVector::new(LinearOperatorStateVectorProduct(self, other))
 	}
 }
 
@@ -400,7 +400,7 @@ struct LinearOperatorStateVectorOuterProduct<T: Basis>(StateVector<T>, StateVect
 
 impl<B: Basis> LinearOperatorTrait<B> for LinearOperatorStateVectorOuterProduct<B> {
 	fn get_component(&self, (n, m): (B, B)) -> Component {
-		self.0.inner.get_component(n) * self.1.inner.get_component(m).conj()
+		self.0.get_component(n) * self.1.get_component(m).conj()
 	}
 }
 
