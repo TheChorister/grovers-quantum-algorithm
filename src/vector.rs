@@ -68,9 +68,17 @@ impl<T: Basis> Clone for StateVector<T> {
 
 impl<B: Basis> StateVector<B> {
 	pub fn new(state_vector: impl StateVectorTrait<B>) -> Self {
-		Self {
+		let mut this = Self {
 			cache: HashMap::new(),
 			inner: Box::new(state_vector)
+		};
+		this.build_cache();
+		this
+	}
+
+	pub fn build_cache(&mut self) {
+		for basis in <B as Basis>::iter() {
+			self.cache.insert(basis.clone(), self.inner.get_component(basis));
 		}
 	}
 

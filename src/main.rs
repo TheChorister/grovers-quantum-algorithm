@@ -13,8 +13,8 @@ use computer::*;
 use crate::gate::*;
 
 fn main() {
-	let mut string: QuString<2> = Default::default();
+	let mut string: QuString<4> = Default::default();
 	string = PauliXGate::new(0).unwrap() * string;
 	string = SwapGate::new(0, 1).unwrap() * string;
-	println!("{}", string.measure::<QuBitBasis<2>>())
+	println!("{}", string.measure::<QuBitBasis<4>>())
 }

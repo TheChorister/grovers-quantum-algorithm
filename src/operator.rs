@@ -1,4 +1,5 @@
 use num::complex::Complex;
+use std::collections::HashMap;
 use std::ops::{ Mul, Div, Add, Neg, Sub, BitXor };
 
 type Component = Complex<f64>;
@@ -37,24 +38,30 @@ impl<B: Basis> LinearOperatorTrait<B> for ZeroLinearOperator {
 }
 
 pub struct LinearOperator<T: Basis> {
-	pub(in super) inner: Box<dyn LinearOperatorTrait<T>>
+	inner: Box<dyn LinearOperatorTrait<T>>,
+	cache: HashMap<(T, T), Component>
 }
 
 impl<T: Basis> LinearOperator<T> {
 	pub fn new(operator: impl LinearOperatorTrait<T>) -> Self {
 		Self {
+			cache: HashMap::new(),
 			inner: Box::new(operator)
 		}
 	}
 
 	pub fn get_component(&self, i: (T, T)) -> Component {
-		self.inner.get_component(i)
+		match self.cache.get(&i) {
+			Some(c) => *c,
+			None => self.inner.get_component(i)
+		}
 	}
 }
 
 impl<T: Basis> Clone for LinearOperator<T> {
 	fn clone(&self) -> Self {
 		LinearOperator {
+			cache: self.cache.clone(),
 			inner: dyn_clone::clone_box(&*self.inner)
 		}
 	}
@@ -77,11 +84,7 @@ impl<B: Basis> Add<LinearOperator<B>> for LinearOperator<B> {
 	type Output = LinearOperator<B>;
 
 	fn add(self, other: LinearOperator<B>) -> Self::Output {
-		LinearOperator {
-			inner: Box::new(
-				LinearOperatorAddition(self, other)
-			)
-		}
+		LinearOperator::new(LinearOperatorAddition(self, other))
 	}
 }
 
@@ -124,11 +127,7 @@ impl<B: Basis> Mul<Component> for LinearOperator<B> {
 	type Output = LinearOperator<B>;
 
 	fn mul(self, other: Component) -> Self {
-		LinearOperator {
-			inner: Box::new(
-				LinearOperatorScalarMultiplication(other, self)
-			)
-		}
+		LinearOperator::new(LinearOperatorScalarMultiplication(other, self))
 	}
 }
 
@@ -144,11 +143,7 @@ impl<B: Basis> Mul<LinearOperator<B>> for Component {
 	type Output = LinearOperator<B>;
 
 	fn mul(self, other: LinearOperator<B>) -> LinearOperator<B> {
-		LinearOperator {
-			inner: Box::new(
-				LinearOperatorScalarMultiplication(self, other)
-			)
-		}
+		LinearOperator::new(LinearOperatorScalarMultiplication(self, other))
 	}
 }
 
@@ -167,11 +162,7 @@ impl<B: Basis> Div<Component> for LinearOperator<B> {
 	type Output = LinearOperator<B>;
 
 	fn div(self, other: Component) -> Self::Output {
-		LinearOperator {
-			inner: Box::new(
-				LinearOperatorScalarMultiplication(other.inv(), self)
-			)
-		}
+		LinearOperator::new(LinearOperatorScalarMultiplication(other.inv(), self))
 	}
 }
 
@@ -207,11 +198,7 @@ impl<B: Basis> Sub<LinearOperator<B>> for LinearOperator<B> {
 	type Output = LinearOperator<B>;
 
 	fn sub(self, other: LinearOperator<B>) -> Self::Output {
-		LinearOperator {
-			inner: Box::new(
-				LinearOperatorAddition(self, - other)
-			)
-		}
+		LinearOperator::new(LinearOperatorAddition(self, - other))
 	}
 }
 
@@ -271,11 +258,7 @@ impl<B: Basis> Mul<LinearOperator<B>> for LinearOperator<B> {
 	type Output = LinearOperator<B>;
 
 	fn mul(self, other: LinearOperator<B>) -> Self::Output {
-		LinearOperator {
-			inner: Box::new(
-				LinearOperatorProduct(self, other) 
-			)
-		}
+		LinearOperator::new(LinearOperatorProduct(self, other))
 	}
 }
 
@@ -408,11 +391,7 @@ impl<B: Basis> BitXor<StateVector<B>> for StateVector<B> {
 	type Output = LinearOperator<B>;
 
 	fn bitxor(self, other: StateVector<B>) -> Self::Output {
-		LinearOperator {
-			inner: Box::new(
-				LinearOperatorStateVectorOuterProduct(self, other)
-			)
-		}
+		LinearOperator::new(LinearOperatorStateVectorOuterProduct(self, other))
 	}
 }
 
