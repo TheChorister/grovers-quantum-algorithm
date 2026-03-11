@@ -49,7 +49,7 @@ impl GateType {
 }
 
 // BITS <= 32 since then the js can use a normal integer type as opposed to bigint for anything larger
-pub const BITS: usize = 6;
+pub const BITS: usize = 8;
 
 #[wasm_bindgen]
 pub struct Complex {
@@ -127,13 +127,11 @@ impl Program {
 	    let mut string: QuString<BITS> = Default::default();
         for gate in self.gates.iter() {
             if let Some(gate_) = gate.gate_type.clone().into(gate.bits.clone()) {
-                println!("{} from {:?}", string, gate.gate_type);
                 string = gate_ * string;
             } else {
-                println!("!! {:?}", gate);
+                println!("malformed gate! {:?}", gate);
             }
         }
-        println!("{}", string);
         string
     }
     
