@@ -1,6 +1,6 @@
 use crate::computer::QuString;
 use crate::utils::UInt;
-use crate::vector::{Basis, StateVector};
+use crate::vector::{Basis, Component, StateVector};
 use crate::{computer::QuBitBasis, operator::LinearOperator};
 use crate::gate::*;
 
@@ -50,6 +50,21 @@ impl GateType {
 
 // BITS <= 32 since then the js can use a normal integer type as opposed to bigint for anything larger
 pub const BITS: usize = 6;
+
+#[wasm_bindgen]
+pub struct Complex {
+    pub re: f64,
+    pub im: f64
+}
+
+impl From<Component> for Complex {
+    fn from(value: Component) -> Self {
+        Self {
+            re: value.re,
+            im: value.im
+        }
+    }
+}
 
 #[wasm_bindgen]
 pub struct Program {
@@ -146,5 +161,15 @@ impl Program {
     #[wasm_bindgen]
     pub fn get_gates(&self) -> Vec<Gate> {
         self.gates.clone()
+    }
+
+    #[wasm_bindgen]
+    pub fn get_component(&self, res: u32) -> Complex {
+        let measurable = self.get_state_vector();
+        let basis: QuBitBasis<BITS> = match UInt::<BITS>::try_from(res) {
+            Ok(v) => v,
+            Err(_) => return Complex { re: 0., im: 0. }
+        }.into();
+        measurable.get_component(basis).into()
     }
 }
