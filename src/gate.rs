@@ -1,3 +1,5 @@
+use num::pow;
+
 use crate::operator::LinearOperator;
 use crate::computer::QuBitBasis;
 use crate::operator::LinearOperatorTrait;
@@ -294,6 +296,64 @@ impl<const N: usize> LinearOperatorTrait<QuBitBasis<N>> for SwapGate {
             ((false, false), (false, false)) | ((false, true), (true, false))
             | ((true, false), (false, true)) | ((true, true), (true, true))=> Component::ONE,
             _ => Component::ZERO
+        })
+    }
+}
+
+#[derive(Clone)]
+pub struct GroverOracle<const N: usize> {
+    target: QuBitBasis<N>
+}
+
+impl<const N: usize> GroverOracle<N> {
+    pub fn new(target: QuBitBasis<N>) -> LinearOperator<QuBitBasis<N>> {
+        LinearOperator::new(Self { target })
+    }
+}
+
+impl<const N: usize> LinearOperatorTrait<QuBitBasis<N>> for GroverOracle<N> {
+    fn get_component(&self, index: (QuBitBasis<N>, QuBitBasis<N>)) -> Component {
+        if index.0 == index.1 {
+            if index.0 == self.target {
+                -Component::ONE
+            } else {
+                Component::ONE
+            }
+        } else {
+            Component::ZERO
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct GroverDiffuser {
+    bits: Vec<usize>
+}
+
+impl GroverDiffuser {
+    pub fn new<const N: usize>(bits: Vec<usize>) -> Option<LinearOperator<QuBitBasis<N>>> {
+        for bit in bits.iter() {
+            if *bit >= N {
+                println!("Tried to create GroverDiffuser over non-existent bit!");
+                return None
+            }
+        }
+        Some(LinearOperator::new(Self { bits }))
+    }
+}
+
+impl<const N: usize> LinearOperatorTrait<QuBitBasis<N>> for GroverDiffuser {
+    fn get_component(&self, index: (QuBitBasis<N>, QuBitBasis<N>)) -> Component {
+        // https://github.com/Qiskit/textbook/blob/main/notebooks/ch-algorithms/grover.ipynb
+        // 2|s><s| - I where s = \sum 1/rt2^N |i> => (|s><s| = \sum \sum 1/2^N |i><j| =>) <m|s><s|n> = 1/sqrt 2^N * 1/sqrt 2^N = 1/2^N
+        // thus <i|(2|s><s| - I)|j> = 2/2^N - \dirac_delta_i,j
+        let not_bits: Vec<usize> = (0..N).into_iter().filter(|b| !self.bits.contains(b)).collect();
+        (Component::ONE / (pow(2, self.bits.len() - 1) as f64) - (if index.0.eq_except(&index.1, not_bits.as_slice()) {
+            Component::ONE
+        } else { Component::ZERO })) * (if index.0.eq_except(&index.1, self.bits.as_slice()) {
+            Component::ONE
+        } else {
+            Component::ZERO
         })
     }
 }

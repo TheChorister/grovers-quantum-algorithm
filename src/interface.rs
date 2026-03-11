@@ -7,7 +7,7 @@ use crate::gate::*;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum GateType {
     Identity,
     PauliX,
@@ -18,22 +18,32 @@ pub enum GateType {
     T,
     CNOT,
     CZ,
-    Swap
+    Swap,
+    GroverOracle,
+    GroverDiffuser
 }
 
 impl GateType {
-    pub fn into<const N: usize>(self, bit: usize) -> Option<LinearOperator<QuBitBasis<N>>> {
+    pub fn into<const N: usize>(self, bits: Vec<usize>) -> Option<LinearOperator<QuBitBasis<N>>> {
         match self {
             GateType::Identity => Some(IdentityGate::new()),
-            GateType::PauliX => PauliXGate::new(bit),
-            GateType::PauliY => PauliYGate::new(bit),
-            GateType::PauliZ => PauliZGate::new(bit),
-            GateType::Hadamard => HadamardGate::new(bit),
-            GateType::Phase => PhaseGate::new(bit),
-            GateType::T => TGate::new(bit),
-            GateType::CNOT => CNOTGate::new(bit, bit + 1),
-            GateType::CZ => CZGate::new(bit, bit + 1),
-            GateType::Swap => SwapGate::new(bit, bit + 1),
+            GateType::PauliX => PauliXGate::new(*bits.first()?),
+            GateType::PauliY => PauliYGate::new(*bits.first()?),
+            GateType::PauliZ => PauliZGate::new(*bits.first()?),
+            GateType::Hadamard => HadamardGate::new(*bits.first()?),
+            GateType::Phase => PhaseGate::new(*bits.first()?),
+            GateType::T => TGate::new(*bits.first()?),
+            GateType::CNOT => CNOTGate::new(*bits.first()?, *bits.get(1)?),
+            GateType::CZ => CZGate::new(*bits.first()?, *bits.get(1)?),
+            GateType::Swap => SwapGate::new(*bits.first()?, *bits.get(1)?),
+            GateType::GroverOracle => {
+                let mut target_bin: usize = 0;
+                for bit in bits.iter() {
+                    target_bin += 1 << *bit;
+                }
+                Some(GroverOracle::new(QuBitBasis::<N>::from(UInt::<N>::try_from(target_bin).ok()?)))
+            },
+            GateType::GroverDiffuser => GroverDiffuser::new(bits)
         }
     }
 }
@@ -47,20 +57,30 @@ pub struct Program {
 }
 
 #[wasm_bindgen]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Gate {
     pub gate_type: GateType,
-    pub bit: usize
+    bits: Vec<usize>
 }
 
 #[wasm_bindgen]
 impl Gate {
     #[wasm_bindgen(constructor)]
-    pub fn new(gate: GateType, bit: usize) -> Self {
+    pub fn new(gate: GateType, bits: Vec<usize>) -> Self {
         Gate {
             gate_type: gate,
-            bit
+            bits
         }
+    }
+
+    #[wasm_bindgen(setter = bits)]
+    pub fn set_bits(&mut self, bits: Vec<usize>) {
+        self.bits = bits;
+    }
+
+    #[wasm_bindgen(getter = bits)]
+    pub fn get_bits(&self) -> Vec<usize> {
+        self.bits.clone()
     }
 }
 
@@ -91,10 +111,14 @@ impl Program {
     fn get_state_vector(&self) -> StateVector<QuBitBasis<BITS>> {
 	    let mut string: QuString<BITS> = Default::default();
         for gate in self.gates.iter() {
-            if let Some(gate) = gate.gate_type.clone().into(gate.bit) {
-                string = gate * string;
+            if let Some(gate_) = gate.gate_type.clone().into(gate.bits.clone()) {
+                println!("{} from {:?}", string, gate.gate_type);
+                string = gate_ * string;
+            } else {
+                println!("!! {:?}", gate);
             }
         }
+        println!("{}", string);
         string
     }
     

@@ -97,7 +97,7 @@ impl<B: Basis> StateVector<B> {
 
 	pub fn measure<T: ConcreteBasis<B>>(&self) -> StateVector<B> {
 		if !self.is_normal() {
-			panic!("Cannot measure a state vector that is not normalized!");
+			panic!("Cannot measure a state vector that is not normalized! ({})", self);
 		}
 		let mut cumulative_probability: f64 = 0.;
 		let random = fastrand::f64();
@@ -120,13 +120,21 @@ impl<B: Basis> StateVector<B> {
 
 impl<B: Basis> Display for StateVector<B> {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		let mut i: usize = 0;
+		let mut has_written = false;
 		for basis in <B as Basis>::iter() {
-			if i != 0 {
-				write!(f, " + ")?
+			let component = self.get_component(basis.clone());
+			if component != Component::ZERO {
+				if has_written {
+					write!(f, " + ")?
+				}
+				if component.re == 0. {
+					write!(f, "{}i |{}⟩", component.im, basis)?;
+				} else if component.im == 0. {
+					write!(f, "{} |{}⟩", component.re, basis)?;
+				}
+				else { write!(f, "({}) |{}⟩", component, basis)?; }
+				has_written = true;
 			}
-			write!(f, "({}) |{}⟩", self.get_component(basis.clone()), basis)?;
-			i += 1
 		}
 		Ok(())
     }

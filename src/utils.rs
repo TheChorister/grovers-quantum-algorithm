@@ -47,4 +47,4 @@ macro_rules! impl_try_from {
     }
 }
 
-impl_try_from!(u8, u16, u32, u64, u128);
+impl_try_from!(u8, u16, u32, u64, u128, usize);

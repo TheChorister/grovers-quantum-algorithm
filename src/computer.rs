@@ -25,7 +25,7 @@ impl<const N: usize> QuBitBasis<N> {
 
 impl<const N: usize> Basis for QuBitBasis<N> {
     fn iter() -> impl Iterator<Item = Self> + Clone {
-        (0u128..(1 << N)).map(|v| UInt::try_from(v).unwrap()).map(|v| v.into())
+        (0usize..(1 << N)).map(|v| UInt::try_from(v).unwrap()).map(|v| v.into())
     }
 }
 

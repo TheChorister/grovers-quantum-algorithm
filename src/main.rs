@@ -10,8 +10,9 @@ pub use interface::*;
 
 fn main() {
 	let mut program = Program::new();
-	program.add(Gate::new(GateType::PauliX, 0));
-	program.add(Gate::new(GateType::Hadamard, 0));
-	program.add(Gate::new(GateType::Hadamard, 1));
+	program.add(Gate::new(GateType::Hadamard, vec![0]));
+	program.add(Gate::new(GateType::Hadamard, vec![1]));
+	program.add(Gate::new(GateType::GroverOracle, vec![0]));
+	program.add(Gate::new(GateType::GroverDiffuser, vec![0, 1]));
 	println!("{}", program.run());
 }
