@@ -1,0 +1,45 @@
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
+
+module.exports = {
+    entry: './src/index.js',
+    output: {
+        path: path.resolve(__dirname, 'build'),
+        filename: '[name].[contenthash].js',
+        clean: true
+    },
+    module: {
+        rules: [
+            {
+                test: /\.jsx?$/,
+                use: 'babel-loader',
+                exclude: /node_modules/
+            }
+        ]
+    },
+    experiments: {
+        asyncWebAssembly: true
+    },
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: './src/template.ejs',
+            filename: 'index.html'
+        }),
+        new MiniCssExtractPlugin()
+    ],
+    optimization: {
+        moduleIds: 'deterministic',
+        runtimeChunk: 'single',
+        splitChunks: {
+            cacheGroups: {
+                vendor: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendors',
+                    chunks: 'all'
+                }
+            }
+        }
+    }
+}

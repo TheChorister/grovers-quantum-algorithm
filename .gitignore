@@ -1,2 +1,8 @@
+/node_modules
+/build
+
 /target
-/pkg
+/rust/target
+/rust/pkg
+
+.DS_Store

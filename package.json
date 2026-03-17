@@ -1,0 +1,48 @@
+{
+  "name": "quantum",
+  "version": "0.0.1",
+  "description": "An interactive visualisation of Grover's quantum search algorithm",
+  "keywords": [
+    "quantum",
+    "grover",
+    "search",
+    "algorithm"
+  ],
+  "homepage": "https://github.com/TheChorister/grovers-quantum-search-algorithm#readme",
+  "bugs": {
+    "url": "https://github.com/TheChorister/grovers-quantum-search-algorithm/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheChorister/grovers-quantum-search-algorithm.git"
+  },
+  "license": "MIT",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build:wasm:dev": "wasm-pack build ./rust --dev",
+    "build:wasm:prod": "wasm-pack build ./rust --release",
+    "build:web:dev": "webpack build --mode development",
+    "build:web:prod": "webpack build --mode production",
+    "build:dev": "npm run build:wasm:dev && npm run build:web:dev",
+    "build:prod": "npm run build:wasm:prod && npm run build:web:prod"
+  },
+  "dependencies": {
+    "@babel/preset-env": "^7.29.0",
+    "@babel/preset-react": "^7.28.5",
+    "babel-loader": "^10.1.1",
+    "complex.js": "^2.4.3",
+    "copy-webpack-plugin": "^14.0.0",
+    "html-webpack-plugin": "^5.6.6",
+    "mini-css-extract-plugin": "^2.10.1",
+    "quantum": "file:./rust/pkg",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "use-force-update": "^2.0.0",
+    "webpack": "^5.105.4"
+  },
+  "devDependencies": {
+    "webpack-cli": "^6.0.1"
+  }
+}

@@ -68,7 +68,8 @@ impl From<Component> for Complex {
 
 #[wasm_bindgen]
 pub struct Program {
-    gates: Vec<Gate>
+    gates: Vec<Gate>,
+    cache_state_vector: Option<QuString<BITS>>
 }
 
 #[wasm_bindgen]
@@ -104,7 +105,8 @@ impl Program {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
-            gates: Vec::new()
+            gates: Vec::new(),
+            cache_state_vector: None
         }
     }
 
@@ -116,14 +118,19 @@ impl Program {
     #[wasm_bindgen]
     pub fn add(&mut self, gate: Gate) {
         self.gates.push(gate);
+        self.cache_state_vector = None;
     }
 
     #[wasm_bindgen]
     pub fn clear(&mut self) {
         self.gates.clear();
+        self.cache_state_vector = None;
     }
 
-    fn get_state_vector(&self) -> StateVector<QuBitBasis<BITS>> {
+    fn get_state_vector(&mut self) -> StateVector<QuBitBasis<BITS>> {
+        if let Some(sv) = self.cache_state_vector.clone() {
+            return sv;
+        }
 	    let mut string: QuString<BITS> = Default::default();
         for gate in self.gates.iter() {
             if let Some(gate_) = gate.gate_type.clone().into(gate.bits.clone()) {
@@ -132,11 +139,12 @@ impl Program {
                 println!("malformed gate! {:?}", gate);
             }
         }
+        self.cache_state_vector = Some(string.clone());
         string
     }
     
     #[wasm_bindgen]
-    pub fn get_probability(&self, res: u32) -> f64 {
+    pub fn get_probability(&mut self, res: u32) -> f64 {
         let measurable = self.get_state_vector();
         let basis: QuBitBasis<BITS> = match UInt::<BITS>::try_from(res) {
             Ok(v) => v,
@@ -146,7 +154,7 @@ impl Program {
     }
 
     #[wasm_bindgen]
-    pub fn run(&self) -> u32 {
+    pub fn run(&mut self) -> u32 {
         let result = self.get_state_vector().measure::<QuBitBasis<BITS>>();
         for basis in <QuBitBasis::<BITS> as Basis>::iter() {
             if result.probability(StateVector::new(basis.clone())) > 0. { // should be exactly one but to be safe
@@ -162,7 +170,7 @@ impl Program {
     }
 
     #[wasm_bindgen]
-    pub fn get_component(&self, res: u32) -> Complex {
+    pub fn get_component(&mut self, res: u32) -> Complex {
         let measurable = self.get_state_vector();
         let basis: QuBitBasis<BITS> = match UInt::<BITS>::try_from(res) {
             Ok(v) => v,
