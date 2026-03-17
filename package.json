@@ -39,6 +39,7 @@
     "quantum": "file:./rust/pkg",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "safe-expr-eval": "^1.0.0",
     "use-force-update": "^2.0.0",
     "webpack": "^5.105.4"
   },

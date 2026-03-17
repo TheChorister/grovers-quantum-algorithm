@@ -69,7 +69,8 @@ impl From<Component> for Complex {
 #[wasm_bindgen]
 pub struct Program {
     gates: Vec<Gate>,
-    cache_state_vector: Option<QuString<BITS>>
+    cache_state_vector: QuString<BITS>,
+    last_cache_index: isize
 }
 
 #[wasm_bindgen]
@@ -106,7 +107,8 @@ impl Program {
     pub fn new() -> Self {
         Self {
             gates: Vec::new(),
-            cache_state_vector: None
+            cache_state_vector: Default::default(),
+            last_cache_index: -1
         }
     }
 
@@ -118,28 +120,27 @@ impl Program {
     #[wasm_bindgen]
     pub fn add(&mut self, gate: Gate) {
         self.gates.push(gate);
-        self.cache_state_vector = None;
     }
 
     #[wasm_bindgen]
     pub fn clear(&mut self) {
         self.gates.clear();
-        self.cache_state_vector = None;
+        self.last_cache_index = -1;
+        self.cache_state_vector = Default::default();
     }
 
     fn get_state_vector(&mut self) -> StateVector<QuBitBasis<BITS>> {
-        if let Some(sv) = self.cache_state_vector.clone() {
-            return sv;
-        }
-	    let mut string: QuString<BITS> = Default::default();
-        for gate in self.gates.iter() {
+	    let mut string: QuString<BITS> = self.cache_state_vector.clone();
+        for i in ((self.last_cache_index + 1) as usize)..self.gates.len() {
+            self.last_cache_index = i as isize;
+            let gate = self.gates.get(i as usize).unwrap();
             if let Some(gate_) = gate.gate_type.clone().into(gate.bits.clone()) {
                 string = gate_ * string;
             } else {
                 println!("malformed gate! {:?}", gate);
             }
         }
-        self.cache_state_vector = Some(string.clone());
+        self.cache_state_vector = string.clone();
         string
     }
     
