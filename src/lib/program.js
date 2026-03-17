@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Program, GateType, Gate } from 'quantum';
+import React, { useRef } from 'react';
+import { Program } from 'quantum';
 import useForceUpdate from 'use-force-update';
 import Complex from 'complex.js';
 
@@ -8,14 +8,12 @@ export default function useProgram () {
     if (progRef.current == null) {
         progRef.current = new Program();
     }
-    console.log(progRef.current);
     const forceUpdate = useForceUpdate();
     return {
         get max_bits() {
             return Program.get_max_bits();
         },
         add: (gate) => {
-            console.log(gate);
             progRef.current.add(gate);
             forceUpdate();
         },
