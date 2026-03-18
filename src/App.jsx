@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Gate, GateType } from 'quantum';
 import useProgram from './lib/program.js';
 import { Parser } from 'safe-expr-eval';
+import Probability from './components/probability/Probability.jsx';
 
 function into_bits(n, max_bits=8) {
     var bits = [];
@@ -60,7 +61,7 @@ export default function App ({ bits }) {
     return <main>
         <div>
             <input type="checkbox" name="oracleType" defaultChecked={oracleType == 'value'} onChange={e => setOracleType(e.target.checked ? 'value' : 'expr')} />
-            <label for="oracleType">Use known target?</label>
+            <label htmlFor="oracleType">Use known target?</label>
         </div>
         <div>
             {
@@ -87,10 +88,6 @@ export default function App ({ bits }) {
             program.add(new Gate(GateType.GroverDiffuser, allBits));
         }}>Apply Diffuser</button>
         <button onClick={() => program.clear()}>Reset</button>
-        { components.map(({ res, comp, prob }) => {
-            return <div key={res}>
-                {res}: {Math.round(prob * 10000)/ 100}% chance; phase: { comp.arg()/Math.PI } pi
-            </div>
-        }) }
+        <Probability components={components} />
     </main>;
 }

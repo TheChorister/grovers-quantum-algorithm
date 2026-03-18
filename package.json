@@ -26,14 +26,17 @@
     "build:web:dev": "webpack build --mode development",
     "build:web:prod": "webpack build --mode production",
     "build:dev": "npm run build:wasm:dev && npm run build:web:dev",
-    "build:prod": "npm run build:wasm:prod && npm run build:web:prod"
+    "build:prod": "npm run build:wasm:prod && npm run build:web:prod",
+    "serve": "python3 -m http.server --dir ./build"
   },
   "dependencies": {
     "@babel/preset-env": "^7.29.0",
     "@babel/preset-react": "^7.28.5",
+    "@react-spring/web": "^10.0.3",
     "babel-loader": "^10.1.1",
     "complex.js": "^2.4.3",
     "copy-webpack-plugin": "^14.0.0",
+    "d3": "^7.9.0",
     "html-webpack-plugin": "^5.6.6",
     "mini-css-extract-plugin": "^2.10.1",
     "quantum": "file:./rust/pkg",
