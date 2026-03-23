@@ -7,22 +7,13 @@ import { animated, useSpring } from '@react-spring/web';
 console.log(d3);
 
 function ProbabilityItem ({ res, prob, comp, xScale, yScale, boundsHeight }) {
-    // console.log(res, prob, comp);
     const value = prob * Math.sign(comp.re);
     const barWidth = xScale.bandwidth();
-    //const [ barWidth, barHeight ] = [ xScale.bandwidth(), Math.abs(yScale(0) - yScale(value)) ];
     const [ x, y ] = [ xScale(res), Math.min(yScale(0), yScale(value)) ];
     const isNegative = yScale(0) - yScale(value) < 0;
     const colorScale = d3.scaleLinear().domain([0, Math.PI, 2 * Math.PI]).range(["red", "blue", "red"]); // #9d174d
-    /*if (res == 0) {
-        console.log(yScale);
-        console.log(yScale(0), yScale(value));
-        console.log(y, barHeight, isNegative);
-    }*/
 
     const springProps = useSpring({
-            // the 'from' properties will be used only to animate the initialization of the component
-            // if you put nothing it will be initialized with the first prop that is provided
             from: {
                 value: 0,
                 textPos: -10,
@@ -32,11 +23,10 @@ function ProbabilityItem ({ res, prob, comp, xScale, yScale, boundsHeight }) {
                 value: value,
                 textPos: isNegative ? +10 : -10,
                 arg: comp.arg()
-            },
-            /*config: {
-                friction: 50,
-            },*/
+            }
     });
+
+    console.log(barWidth, barWidth < 40 ? 90 : 0);
 
     return (
         <g>
@@ -59,7 +49,7 @@ function ProbabilityItem ({ res, prob, comp, xScale, yScale, boundsHeight }) {
                 alignmentBaseline="central"
                 fontSize={12}
             >
-                {springProps.value?.to(value => (value * 100).toFixed(2) + " %")}
+                {springProps.value?.to(value => (value * 100).toFixed(2) + "%")}
             </animated.text>
             <animated.text
                 x={x + xScale.bandwidth() / 2}
@@ -111,17 +101,13 @@ function BarChart ({ components, width, height, ref }) {
                     textAnchor="middle"
                     alignmentBaseline="central"
                     fontSize={9}
-                    stroke="#808080"
+                    fill="#808080"
                     opacity={0.8}
                 >
                     {value * 100}%
                 </text>
             </g>
     ));
-
-    console.log(yScale
-        .ticks(6)
-        .slice(1));
 
     const shapes = components.map(d => <ProbabilityItem
         key={d.res}
@@ -131,7 +117,7 @@ function BarChart ({ components, width, height, ref }) {
         {...d} />
     );
 
-    return <div ref={ref} style={{ height: '100vh' }}>
+    return <div ref={ref} style={{ height: '100%', width: '100%' }}>
         <svg width={width} height={height}>
             <g
             width={boundsWidth}

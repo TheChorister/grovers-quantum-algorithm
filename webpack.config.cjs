@@ -16,6 +16,19 @@ module.exports = {
                 test: /\.jsx?$/,
                 use: 'babel-loader',
                 exclude: /node_modules/
+            },
+            {
+                test: /\.css$/,
+                use: [
+                    //MiniCssExtractPlugin.loader,
+                    'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            modules: true
+                        }
+                    }
+                ]
             }
         ]
     },
@@ -27,7 +40,7 @@ module.exports = {
             template: './src/template.ejs',
             filename: 'index.html'
         }),
-        new MiniCssExtractPlugin()
+        //new MiniCssExtractPlugin()
     ],
     optimization: {
         moduleIds: 'deterministic',
