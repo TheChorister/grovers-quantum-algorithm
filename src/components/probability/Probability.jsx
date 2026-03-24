@@ -26,8 +26,6 @@ function ProbabilityItem ({ res, prob, comp, xScale, yScale, boundsHeight }) {
             }
     });
 
-    console.log(barWidth, barWidth < 40 ? 90 : 0);
-
     return (
         <g>
             <animated.rect
@@ -117,8 +115,7 @@ function BarChart ({ components, width, height, ref }) {
         {...d} />
     );
 
-    return <div ref={ref} style={{ height: '100%', width: '100%' }}>
-        <svg width={width} height={height}>
+    return <svg width={width} height={height}>
             <g
             width={boundsWidth}
             height={boundsHeight}
@@ -128,11 +125,9 @@ function BarChart ({ components, width, height, ref }) {
                 {shapes}
             </g>
         </svg>
-    </div>
 }
 
-export default function Probability ({ components }) {
-    const ref = useRef(null);
-    const { width, height } = useDimensions(ref);
-    return <BarChart ref={ref} width={width} height={height} components={components} />
+export default function Probability ({ components, parentRef }) {
+    const { width, height } = useDimensions(parentRef);
+    return <BarChart width={width} height={height} components={components} />
 }

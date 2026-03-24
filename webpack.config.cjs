@@ -20,12 +20,15 @@ module.exports = {
             {
                 test: /\.css$/,
                 use: [
-                    //MiniCssExtractPlugin.loader,
-                    'style-loader',
+                    MiniCssExtractPlugin.loader,
                     {
                         loader: 'css-loader',
                         options: {
-                            modules: true
+                            modules: {
+                                localIdentName: '[name]_[local]_[hash:base64:5]',
+                                exportLocalsConvention: 'camelCase'
+                            },
+                            esModule: false
                         }
                     }
                 ]
@@ -36,11 +39,13 @@ module.exports = {
         asyncWebAssembly: true
     },
     plugins: [
+        new MiniCssExtractPlugin({
+            filename: '[name].[contenthash].css'
+        }),
         new HtmlWebpackPlugin({
             template: './src/template.ejs',
             filename: 'index.html'
         }),
-        //new MiniCssExtractPlugin()
     ],
     optimization: {
         moduleIds: 'deterministic',

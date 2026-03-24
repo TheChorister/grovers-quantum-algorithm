@@ -6,7 +6,7 @@ import { animated, useSpring } from '@react-spring/web';
 
 const PADDING = 40;
 
-function CartesianRaw ({ targets, components, size, allValues }) {
+function CartesianRaw ({ targets, components, size, allValues, ref }) {
     const scale = d3.scaleLinear().domain([-1.25, 1.25]).range([PADDING, size - PADDING * 2]);
     const probabilityScale = d3.scalePow().domain([-1, 1]).range([-1, 1]).exponent(0.5);
     const [ comp_key, comp_nokey ] = useMemo(() => {
@@ -143,9 +143,7 @@ function CartesianRaw ({ targets, components, size, allValues }) {
     </svg>
 }
 
-export default function Cartesian ({ targets, components, allValues }) {
-    const ref = useRef(null);
-    const { width, height } = useDimensions(ref);
-
-    return <div ref={ref} style={{ height: '100%', width: '100%' }}><CartesianRaw targets={targets} components={components} size={Math.min(width, height)} allValues={allValues} /></div>
+export default function Cartesian ({ targets, components, allValues, parentRef }) {
+    const { width, height } = useDimensions(parentRef);
+    return <CartesianRaw targets={targets} components={components} size={Math.min(width, height)} allValues={allValues} />
 }

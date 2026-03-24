@@ -44,6 +44,7 @@
     "quantum": "file:./rust/pkg",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-tabs": "^6.1.0",
     "safe-expr-eval": "^1.0.0",
     "style-loader": "^4.0.0",
     "use-force-update": "^2.0.0",

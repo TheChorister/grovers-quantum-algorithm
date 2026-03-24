@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Gate, GateType } from 'quantum';
 import useProgram from '../../lib/program.js';
 import { Parser } from 'safe-expr-eval';
@@ -6,9 +6,7 @@ import Probability from '../probability/Probability.jsx';
 import Cartesian from '../cartesian/Cartesian.jsx';
 import Button from '../button/Button.jsx';
 
-import * as styles from './Dashboard.css';
-
-console.log(styles);
+import styles from './Dashboard.css';
 
 function into_bits(n, max_bits=8) {
     var bits = [];
@@ -79,8 +77,11 @@ export default function Dashboard ({ bits }) {
         }
     }, [ hasError, oracleType, target, expr, allValues ]);
 
+    const graphLeft = useRef(null);
+    const graphRight = useRef(null);
+
     return <div className={styles.dashboard}>
-            <div className={styles['settings-left']}>
+            <div className={styles.settingsLeft}>
                 <input type="checkbox" name="oracleType" defaultChecked={oracleType == 'value'} onChange={e => setOracleType(e.target.checked ? 'value' : 'expr')} />
                 <label htmlFor="oracleType">Use known target?</label>
                 {
@@ -112,7 +113,7 @@ export default function Dashboard ({ bits }) {
             <Button onClick={() => program.clear()} disabled={hasError}>Reset</Button>
         </div>
         
-        { !hasError && <><div className={styles['graph-left']}><Cartesian targets={values} components={components} allValues={allValues} /></div>
-        <div className={styles['graph-right']}><Probability components={components} /></div></> }
+        { !hasError && <><div className={styles.graphLeft} ref={graphLeft}><Cartesian parentRef={graphLeft} targets={values} components={components} allValues={allValues} /></div>
+        <div className={styles.graphRight} ref={graphRight}><Probability parentRef={graphRight} components={components} /></div></> }
     </div>;
 }

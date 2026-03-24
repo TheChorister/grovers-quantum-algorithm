@@ -20,11 +20,11 @@ export function useDimensions (targetRef) {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    /*useEffect(() => {
+    useEffect(() => {
         const observer = new MutationObserver(() => handleResize());
         observer.observe(targetRef.current, { attributes: true, childList: true, subtree: true });
         return () => observer.disconnect();
-    }, [ targetRef ]);*/
+    }, [ targetRef ]);
 
     useLayoutEffect(() => {
         handleResize();
