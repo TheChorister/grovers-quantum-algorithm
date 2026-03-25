@@ -127,7 +127,7 @@ function BarChart ({ components, width, height, ref }) {
         </svg>
 }
 
-export default function Probability ({ components, parentRef }) {
-    const { width, height } = useDimensions(parentRef);
+export default function Probability ({ components, parentRef, dependencies }) {
+    const { width, height } = useDimensions(parentRef, dependencies || []);
     return <BarChart width={width} height={height} components={components} />
 }

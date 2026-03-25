@@ -33,8 +33,8 @@ impl GateType {
             GateType::Hadamard => HadamardGate::new(*bits.first()?),
             GateType::Phase => PhaseGate::new(*bits.first()?),
             GateType::T => TGate::new(*bits.first()?),
-            GateType::CNOT => CNOTGate::new(*bits.first()?, *bits.get(1)?),
-            GateType::CZ => CZGate::new(*bits.first()?, *bits.get(1)?),
+            GateType::CNOT => CNOTGate::new(*bits.first()?, bits.into_iter().skip(1).collect()),
+            GateType::CZ => CZGate::new(bits),
             GateType::Swap => SwapGate::new(*bits.first()?, *bits.get(1)?),
             GateType::GroverOracle => {
                 let mut target_bin: usize = 0;
@@ -120,6 +120,18 @@ impl Program {
     #[wasm_bindgen]
     pub fn add(&mut self, gate: Gate) {
         self.gates.push(gate);
+    }
+
+    #[wasm_bindgen]
+    pub fn insert(&mut self, index: usize, gate: Gate) {
+        self.gates.insert(index, gate);
+    }
+
+    #[wasm_bindgen]
+    pub fn remove(&mut self, i: usize) {
+        self.gates.remove(i);
+        self.last_cache_index = -1;
+        self.cache_state_vector = Default::default();
     }
 
     #[wasm_bindgen]

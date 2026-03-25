@@ -207,65 +207,84 @@ impl<const N: usize> LinearOperatorTrait<QuBitBasis<N>> for TGate {
 
 #[derive(Clone)]
 pub struct CNOTGate {
-    bit1: usize,
-    bit2: usize
+    control: Vec<usize>,
+    target: usize
 }
 
 impl CNOTGate {
-    pub fn new<const N: usize>(bit1: usize, bit2: usize) -> Option<LinearOperator<QuBitBasis<N>>> {
-        if bit1 >= N || bit2 >= N {
+    pub fn new<const N: usize>(target: usize, control: Vec<usize>) -> Option<LinearOperator<QuBitBasis<N>>> {
+        if target >= N {
             println!("Tried to create CNOT gate on non-existent bits!");
             None
         } else {
-            Some(LinearOperator::new(Self { bit1, bit2 }))
+            for bit in control.iter() {
+                if *bit >= N {
+                    println!("Tried to create CNOT gate on non-existent bits!");
+                    return None
+                }
+            }
+            Some(LinearOperator::new(Self { target, control }))
         }
     }
 }
 
 impl<const N: usize> LinearOperatorTrait<QuBitBasis<N>> for CNOTGate {
     fn get_component(&self, index: (QuBitBasis<N>, QuBitBasis<N>)) -> Component {
-        (if index.0.eq_except(&index.1, &[self.bit1, self.bit2]) {
+        let mut is1 = true;
+        for bit in self.control.iter() {
+            if !(index.0.get(*bit) && index.1.get(*bit)) {
+                is1 = false;
+                break;
+            }
+        }
+        (if index.0.eq_except(&index.1, &[self.target]) {
             Component::ONE
         } else {
             Component::ZERO
-        }) * (match ((index.0.get(self.bit1), index.0.get(self.bit2)), (index.1.get(self.bit1), index.1.get(self.bit2))) {
-            ((false, false), (false, false)) | ((false, true), (false, true)) => Component::ONE,
-            ((true, false), (true, true)) => Component::ONE,
-            ((true, true), (true, false)) => Component::ONE,
-            _ => Component::ZERO
+        }) * (if is1 {
+            if index.0.get(self.target) != index.1.get(self.target) {
+                Component::ONE
+            } else {
+                Component::ZERO
+            }
+        } else if index.0.get(self.target) == index.1.get(self.target) {
+            Component::ONE
+        }
+        else {
+            Component::ZERO
         })
     }
 }
 
 #[derive(Clone)]
 pub struct CZGate {
-    bit1: usize,
-    bit2: usize
+    bits: Vec<usize>
 }
 
 impl CZGate {
-    pub fn new<const N: usize>(bit1: usize, bit2: usize) -> Option<LinearOperator<QuBitBasis<N>>> {
-        if bit1 >= N || bit2 >= N {
-            println!("Tried to create controlled z gate on non-existent bits!");
-            None
-        } else {
-            Some(LinearOperator::new(Self { bit1, bit2 }))
+    pub fn new<const N: usize>(bits: Vec<usize>) -> Option<LinearOperator<QuBitBasis<N>>> {
+        for bit in bits.iter() {
+            if *bit >= N {
+                println!("Tried to create CZGate over non-existent bit!");
+                return None
+            }
         }
+        Some(LinearOperator::new(Self { bits }))
     }
 }
 
 impl<const N: usize> LinearOperatorTrait<QuBitBasis<N>> for CZGate {
     fn get_component(&self, index: (QuBitBasis<N>, QuBitBasis<N>)) -> Component {
-        (if index.0.eq_except(&index.1, &[self.bit1, self.bit2]) {
-            Component::ONE
+        if index.0.eq(&index.1) {
+            for bit in self.bits.iter() {
+                if !index.0.get(*bit) {
+                    return Component::ONE;
+                }
+            }
+            -Component::ONE
         } else {
             Component::ZERO
-        }) * (match ((index.0.get(self.bit1), index.0.get(self.bit2)), (index.1.get(self.bit1), index.1.get(self.bit2))) {
-            ((false, false), (false, false)) | ((false, true), (false, true))
-            | ((true, false), (true, false)) => Component::ONE,
-            ((true, true), (true, true)) => -Component::ONE,
-            _ => Component::ZERO
-        })
+        }
     }
 }
 
